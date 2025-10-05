@@ -4,11 +4,11 @@ initialise and setup tooling
 ```bash
 npm init -y
 
-npm install -D typescript @types/node @types/express ts-node nodemon
 npm install express
 npm install lodash
 npm install ws
-npm install -D @types/lodash @types/ws
+npm install -D typescript @types/node @types/express @types/ws @types/lodash ts-node nodemon
+
 
 ```
 
