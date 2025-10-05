@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket Test</title>
+</head>
+<body>
+  <h1>WebSocket Connection</h1>
+  
+  <div id="status">Disconnected</div>
+  
+  <div>
+    <input type="text" id="messageInput" placeholder="Type a message">
+    <button id="sendBtn">Send</button>
+  </div>
+  
+  <div>
+    <h3>Messages:</h3>
+    <div id="messages"></div>
+  </div>
+
+  <script>
+    // Connect to WebSocket server
+    const ws = new WebSocket('ws://localhost:3000');
+    
+    const status = document.getElementById('status');
+    const messages = document.getElementById('messages');
+    const input = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Connection opened
+    ws.onopen = () => {
+      console.log('Connected to WebSocket server');
+      status.textContent = 'Connected ✅';
+      status.style.color = 'green';
+    };
+
+    // Listen for messages from server
+    ws.onmessage = (event) => {
+      console.log('Message from server:', event.data);
+      
+      const msg = document.createElement('div');
+      msg.textContent = `Server: ${event.data}`;
+      messages.appendChild(msg);
+    };
+
+    // Connection closed
+    ws.onclose = () => {
+      console.log('Disconnected from WebSocket server');
+      status.textContent = 'Disconnected ❌';
+      status.style.color = 'red';
+    };
+
+    // Handle errors
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    // Send message to server
+    sendBtn.onclick = () => {
+      const message = input.value;
+      if (message) {
+        ws.send(message);
+        
+        const msg = document.createElement('div');
+        msg.textContent = `You: ${message}`;
+        msg.style.color = 'blue';
+        messages.appendChild(msg);
+        
+        input.value = '';
+      }
+    };
+
+    // Send on Enter key
+    input.onkeypress = (e) => {
+      if (e.key === 'Enter') {
+        sendBtn.click();
+      }
+    };
+  </script>
+</body>
+</html>
