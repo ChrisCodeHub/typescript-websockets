@@ -1,82 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebSocket Test</title>
+  <title>WebSocket Paths Demo</title>
 </head>
 <body>
-  <h1>WebSocket Connection</h1>
-  
-  <div id="status">Disconnected</div>
+  <h1>Multiple WebSocket Connections</h1>
   
   <div>
-    <input type="text" id="messageInput" placeholder="Type a message">
-    <button id="sendBtn">Send</button>
+    <h2>Chat</h2>
+    <div id="chatMessages"></div>
+    <input id="chatInput" type="text">
+    <button id="chatSend">Send to Chat</button>
   </div>
-  
+
   <div>
-    <h3>Messages:</h3>
-    <div id="messages"></div>
+    <h2>Notifications</h2>
+    <div id="notifMessages"></div>
+  </div>
+
+  <div>
+    <h2>Game Room</h2>
+    <input id="roomId" placeholder="Room ID" value="room123">
+    <button id="joinGame">Join Game</button>
+    <div id="gameMessages"></div>
   </div>
 
   <script>
-    // Connect to WebSocket server
-    const ws = new WebSocket('ws://localhost:3000');
-    
-    const status = document.getElementById('status');
-    const messages = document.getElementById('messages');
-    const input = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-
-    // Connection opened
-    ws.onopen = () => {
-      console.log('Connected to WebSocket server');
-      status.textContent = 'Connected ✅';
-      status.style.color = 'green';
+    // Chat WebSocket
+    const chatWs = new WebSocket('ws://localhost:3000/chat');
+    chatWs.onmessage = (event) => {
+      document.getElementById('chatMessages').innerHTML += 
+        `<div>${event.data}</div>`;
     };
 
-    // Listen for messages from server
-    ws.onmessage = (event) => {
-      console.log('Message from server:', event.data);
+    document.getElementById('chatSend').onclick = () => {
+      const msg = document.getElementById('chatInput').value;
+      chatWs.send(msg);
+    };
+
+    // Notifications WebSocket
+    const notifWs = new WebSocket('ws://localhost:3000/notifications');
+    notifWs.onmessage = (event) => {
+      document.getElementById('notifMessages').innerHTML += 
+        `<div>${event.data}</div>`;
+    };
+
+    // Game WebSocket (dynamic path)
+    let gameWs;
+    document.getElementById('joinGame').onclick = () => {
+      const roomId = document.getElementById('roomId').value;
+      gameWs = new WebSocket(`ws://localhost:3000/game/${roomId}`);
       
-      const msg = document.createElement('div');
-      msg.textContent = `Server: ${event.data}`;
-      messages.appendChild(msg);
-    };
-
-    // Connection closed
-    ws.onclose = () => {
-      console.log('Disconnected from WebSocket server');
-      status.textContent = 'Disconnected ❌';
-      status.style.color = 'red';
-    };
-
-    // Handle errors
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-
-    // Send message to server
-    sendBtn.onclick = () => {
-      const message = input.value;
-      if (message) {
-        ws.send(message);
-        
-        const msg = document.createElement('div');
-        msg.textContent = `You: ${message}`;
-        msg.style.color = 'blue';
-        messages.appendChild(msg);
-        
-        input.value = '';
-      }
-    };
-
-    // Send on Enter key
-    input.onkeypress = (e) => {
-      if (e.key === 'Enter') {
-        sendBtn.click();
-      }
+      gameWs.onmessage = (event) => {
+        document.getElementById('gameMessages').innerHTML += 
+          `<div>${event.data}</div>`;
+      };
     };
   </script>
 </body>
