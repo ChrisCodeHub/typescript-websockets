@@ -29,7 +29,7 @@
     // Chat WebSocket
     const chatWs = new WebSocket('ws://localhost:3000/chat');
     chatWs.onmessage = (event) => {
-      document.getElementById('chatMessages').innerHTML += 
+      document.getElementById('chatMessages').innerHTML = 
         `<div>${event.data}</div>`;
     };
 
@@ -41,7 +41,7 @@
     // Notifications WebSocket
     const notifWs = new WebSocket('ws://localhost:3000/notifications');
     notifWs.onmessage = (event) => {
-      document.getElementById('notifMessages').innerHTML += 
+      document.getElementById('notifMessages').innerHTML = 
         `<div>${event.data}</div>`;
     };
 
@@ -52,7 +52,7 @@
       gameWs = new WebSocket(`ws://localhost:3000/game/${roomId}`);
       
       gameWs.onmessage = (event) => {
-        document.getElementById('gameMessages').innerHTML += 
+        document.getElementById('gameMessages').innerHTML = 
           `<div>${event.data}</div>`;
       };
     };

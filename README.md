@@ -22,3 +22,19 @@ node ./dist/server.js
 `index.html` was written by Claude.ai  
 
 
+```txt
+What this makes....
+
+Frontend (Browser)                Backend (Server)
+==================                ================
+
+chatWs ─────────┐
+                ├──────────────► wss (ONE WebSocket Server)
+notifWs ────────┤                  │
+                │                  ├─► connection event (ws1, req) → path='/chat'
+gameWs ─────────┘                  ├─► connection event (ws2, req) → path='/notifications'
+                                   └─► connection event (ws3, req) → path='/game/room123'
+
+3 client                          1 server
+connections                       3 separate ws objects
+```

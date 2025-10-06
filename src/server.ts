@@ -12,16 +12,15 @@ const wss = new WebSocketServer({server});
 
 // send the request as well so that we can pick up the specific patjs
 wss.on("connection", (ws, req)=> {
-    console.log(` websocket connected `);
-
 
     const path = req.url; // Get the path from the request
+    console.log(`websocket connected path url on this connection is ${path}`);
 
     if (path === '/chat'){
         openChatWebsocket(ws);
-    } else if (path === 'notifications'){
+    } else if (path === '/notifications'){
         openNotificationsWebsocket(ws);
-    }else if (path?.startsWith('/game/')) {
+    } else if (path?.startsWith('/game/')) {
         const roomId = path.split('/')[2]; // Extract 'room123'
         handleGame(ws, roomId);
     } else {
@@ -29,20 +28,9 @@ wss.on("connection", (ws, req)=> {
         ws.close;
     }
 
-    // Send a welcome message
-    ws.send('Welcome to the WebSocket server!');
-
-    // setup message handler, gets called whenever a message arrives
-    ws.on("message", (data) => {
-        console.log(` message ${data}`);
-        
-        // echo
-        ws.send(`Server received: ${data}`);
-    });
-
     // setup on-close handler, gets called whenever socket closes
     ws.on("close", () => {
-        console.log(` closed the websocket`);
+        console.log(` closed the websocket for ${path}`);
     });
 
 });
@@ -55,7 +43,7 @@ function openChatWebsocket(ws:WebSocket){
 
     // messages get data, in this case we will just echo back and add a note
     ws.on("message", (data) => {
-        ws.send(`Server received: ${data}`);
+        ws.send(`openChat Server received: ${data}`);
     });
     
     ws.on("close", () => {
@@ -65,6 +53,7 @@ function openChatWebsocket(ws:WebSocket){
 
 
 function openNotificationsWebsocket(ws:WebSocket){
+    console.log(" opened the openNotificationsWebsocket ");
 
     const notifloop = setInterval( () => {        
         ws.send(`Notification at ${new Date().toLocaleTimeString()}`);
@@ -77,7 +66,12 @@ function openNotificationsWebsocket(ws:WebSocket){
 }
 
 function handleGame(ws : WebSocket, roomId : string){
-
+    console.log(" opened the handleGame ");
+    const test = roomId;
+    ws.send(`Joined game ${test} `);
+    ws.on("message", (data) =>{
+        ws.send(`game message was ${data}`);
+    })
 }
 
 
