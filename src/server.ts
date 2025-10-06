@@ -1,12 +1,21 @@
 import express from 'express'
 import http from 'http'
 import WebSocket, { WebSocketServer } from 'ws'
-
-
+import *  as _ from 'lodash';
 
 const app = express();
 const server = http.createServer(app);
+let magicWord :string = "goAway";
+
 app.use(express.static('public'))
+app.use(express.json()); // allows use of the req.body and parse the json in 1
+
+app.post("/hello", (req, res) =>{
+    const superpassword = _.get(req.body, "theSecretYouSeek");
+    console.log(`saw a post to hello with ${superpassword}`)
+    magicWord = superpassword;
+    res.json({"access":"denied"})
+})
 
 const wss = new WebSocketServer({server});
 

@@ -1,28 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>WebSocket Paths Demo</title>
+  <title>WebSocket messages with REST login</title>
 </head>
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 5px solid #7318ab;
+      border-radius: 5px;
+    }
+    input[type="text"] {
+      width: 300px;
+      padding: 8px;
+      margin-right: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      background: #d2e7183d;
+      cursor: pointer;
+    }
+    #messages, #postResponse {
+      margin-top: 15px;
+      padding: 10px;
+      background: #aed7a6;
+      min-height: 50px;
+      border-radius: 3px;
+    }
+    #status {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+</style>    
 <body>
   <h1>Multiple WebSocket Connections</h1>
-  
-  <div>
-    <h2>Chat</h2>
-    <div id="chatMessages"></div>
-    <input id="chatInput" type="text">
-    <button id="chatSend">Send to Chat</button>
+  <div class="section">
+    <div>
+      <h2>Chat</h2>
+      <div id="chatMessages"></div>
+      <input id="chatInput" type="text">
+      <button id="chatSend">Send to Chat</button>
+    </div>
+
+    <div>
+      <h2>Notifications</h2>
+      <div id="notifMessages"></div>
+    </div>
+
+    <div>
+      <h2>Game Room</h2>
+      <input id="roomId" placeholder="Room ID" value="room123" type="text">
+      <button id="joinGame">Join Game</button>
+      <div id="gameMessages"></div>
+    </div>
   </div>
 
-  <div>
-    <h2>Notifications</h2>
-    <div id="notifMessages"></div>
-  </div>
-
-  <div>
-    <h2>Game Room</h2>
-    <input id="roomId" placeholder="Room ID" value="room123">
-    <button id="joinGame">Join Game</button>
-    <div id="gameMessages"></div>
+    <!-- POST Section -->
+  <div class="section">
+    <h2>POST to /hello</h2>
+    
+    <div>
+      <input type="text" id="postInput" placeholder="Type text to POST">
+      <button id="postSend">Send via POST</button>
+    </div>
+    
+    <div>
+      <h3>POST Response:</h3>
+      <div id="postResponse"></div>
+    </div>
   </div>
 
   <script>
@@ -55,6 +106,56 @@
         document.getElementById('gameMessages').innerHTML = 
           `<div>${event.data}</div>`;
       };
+    };
+
+    // #########################################################################
+    // ==================== POST Code ==========================================
+    // #########################################################################
+
+    const postInput = document.getElementById('postInput');
+    const postSend = document.getElementById('postSend');
+    const postResponse = document.getElementById('postResponse');
+
+    postSend.onclick = async () => {
+      const text = postInput.value;
+      
+      if (!text) {
+        postResponse.textContent = 'Please enter some text';
+        return;
+      }
+
+      try {
+        // Send POST request
+        const response = await fetch('/hello', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ theSecretYouSeek: text })
+        });
+
+        // Get the response
+        const data = await response.json();
+        
+        // Display the response
+        postResponse.innerHTML = `
+          <strong>Response:</strong><br>
+          ${data.message}<br>
+          <em>Text length: ${data.length} characters</em>
+        `;
+        
+        postInput.value = '';
+        
+      } catch (error) {
+        console.error('POST error:', error);
+        postResponse.textContent = `Error: ${error.message}`;
+      }
+    };
+
+    postInput.onkeypress = (e) => {
+      if (e.key === 'Enter') {
+        postSend.click();
+      }
     };
   </script>
 </body>
