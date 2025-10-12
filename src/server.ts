@@ -3,6 +3,13 @@ import http from 'http'
 import WebSocket, { WebSocketServer } from 'ws'
 import *  as _ from 'lodash';
 
+interface netHelloResponse{
+    access:string
+    authToken : string
+};
+
+const deepSecret = "124587986532!";
+
 const app = express();
 const server = http.createServer(app);
 let magicWord :string = "goAway";
@@ -13,8 +20,19 @@ app.use(express.json()); // allows use of the req.body and parse the json in 1
 app.post("/hello", (req, res) =>{
     const superpassword = _.get(req.body, "theSecretYouSeek");
     console.log(`saw a post to hello with ${superpassword}`)
-    magicWord = superpassword;
-    res.json({"access":"denied"})
+    if (superpassword === "youGuessedIt"){
+            const helloBack : netHelloResponse = {
+                access    : "approved",
+                authToken : deepSecret
+            } 
+        res.status(200).json(helloBack)
+    } else {
+            const helloBack : netHelloResponse = {
+                access : "denied",
+                authToken : ""
+            }
+        res.status(403).json({"access":"denied"})
+    }
 })
 
 const wss = new WebSocketServer({server});
@@ -22,11 +40,14 @@ const wss = new WebSocketServer({server});
 // send the request as well so that we can pick up the specific patjs
 wss.on("connection", (ws, req)=> {
 
-    const path = req.url; // Get the path from the request
+    // const path = req.url; // Get the path from the request
+    const url = new URL(req.url!, `http://${req.headers.host}`);
+    const path = url.pathname;
     console.log(`websocket connected path url on this connection is ${path}`);
-
     if (path === '/chat'){
-        openChatWebsocket(ws);
+        const token = url.searchParams.get('token') ?? '';
+        console.log(`token is ${token}`)
+        openChatWebsocket(ws, token);
     } else if (path === '/notifications'){
         openNotificationsWebsocket(ws);
     } else if (path?.startsWith('/game/')) {
@@ -44,20 +65,26 @@ wss.on("connection", (ws, req)=> {
 
 });
 
-function openChatWebsocket(ws:WebSocket){
-    console.log(" opened the openChatWebsocket ");
-    
-    // Send a welcome message
-    ws.send('Welcome to the WebSocket chatroom');
+function openChatWebsocket(ws:WebSocket, token:string){
 
-    // messages get data, in this case we will just echo back and add a note
-    ws.on("message", (data) => {
-        ws.send(`openChat Server received: ${data}`);
-    });
-    
-    ws.on("close", () => {
-        console.log(` closed the websocket`);
-    });
+    if (token != deepSecret){
+        ws.close(1008, 'unauthorised')
+    }
+    else {
+        console.log(" opened the openChatWebsocket ");
+        
+        // Send a welcome message
+        ws.send('Welcome to the WebSocket chatroom');
+
+        // messages get data, in this case we will just echo back and add a note
+        ws.on("message", (data) => {
+            ws.send(`openChat Server received: ${data}`);
+        });
+        
+        ws.on("close", () => {
+            console.log(` closed the websocket`);
+        });
+    }
 }
 
 

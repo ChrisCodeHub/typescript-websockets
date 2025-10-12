@@ -63,11 +63,11 @@
 
     <!-- POST Section -->
   <div class="section">
-    <h2>POST to /hello</h2>
+    <h2>POST a password (hint youGuessedIt) to /hello</h2>
     
     <div>
       <input type="text" id="postInput" placeholder="Type text to POST">
-      <button id="postSend">Send via POST</button>
+      <button id="postSend">Send Password via POST</button>
     </div>
     
     <div>
@@ -77,8 +77,9 @@
   </div>
 
   <script>
+    let authToken = ''
     // Chat WebSocket
-    const chatWs = new WebSocket('ws://localhost:3000/chat');
+    const chatWs = new WebSocket('ws://localhost:3000/chat?token=${authToken}');
     chatWs.onmessage = (event) => {
       document.getElementById('chatMessages').innerHTML = 
         `<div>${event.data}</div>`;
@@ -117,9 +118,9 @@
     const postResponse = document.getElementById('postResponse');
 
     postSend.onclick = async () => {
-      const text = postInput.value;
+      const userText = postInput.value;
       
-      if (!text) {
+      if (!userText) {
         postResponse.textContent = 'Please enter some text';
         return;
       }
@@ -131,20 +132,31 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ theSecretYouSeek: text })
+          body: JSON.stringify({ theSecretYouSeek: userText })
         });
 
         // Get the response
         const data = await response.json();
-        
-        // Display the response
-        postResponse.innerHTML = `
-          <strong>Response:</strong><br>
-          ${data.message}<br>
-          <em>Text length: ${data.length} characters</em>
-        `;
-        
-        postInput.value = '';
+
+        // Check status and display accordingly
+        if (response.status === 200) {
+          authToken = data.authToken;
+          postResponse.innerHTML = `
+            <strong style="color: green;">✅ Access: ${data.access}</strong><br>
+            <em>Welcome! You got it right.</em>
+          `;
+        } else if (response.status === 403) {
+          authToken = '';
+          postResponse.innerHTML = `
+            <strong style="color: red;">❌ Access: ${data.access}</strong><br>
+            <em>Wrong password. Try again!</em>
+          `;
+        } else {
+          postResponse.innerHTML = `
+            <strong>Status: ${response.status}</strong><br>
+            ${data.access}
+          `;
+        }
         
       } catch (error) {
         console.error('POST error:', error);
