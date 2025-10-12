@@ -26,6 +26,11 @@
       background: #d2e7183d;
       cursor: pointer;
     }
+    #chatSend {
+      padding: 8px 16px;
+      background: #59db323d;
+      cursor: pointer;
+    }
     #messages, #postResponse {
       margin-top: 15px;
       padding: 10px;
@@ -78,16 +83,55 @@
 
   <script>
     let authToken = ''
-    // Chat WebSocket
-    const chatWs = new WebSocket('ws://localhost:3000/chat?token=${authToken}');
-    chatWs.onmessage = (event) => {
-      document.getElementById('chatMessages').innerHTML = 
-        `<div>${event.data}</div>`;
-    };
+    let chatWs = null;
 
+    function connectChat(){
+
+        // if no auth token, just return
+        if (authToken === ''){
+            return;
+        }
+
+        // already connected, should not have come here but 
+        // handle for completeness
+        if ( chatWs && chatWs.readyState === WebSocket.OPEN){
+            return;
+        }
+
+        chatWs = new WebSocket(`ws://localhost:3000/chat?token=${authToken}`);
+
+        // if the websocket is closed, start a loop to try and reconnect
+        chatWs.onclose = () => {
+            chatWs = null;
+            if ( (authToken !== '') && (reconnectLoop === null)){
+                reconnectLoop = setInterval( () => {
+                    connectChat()
+                }, 1000)
+            }
+        };
+
+        // when it opens - stop trying to open of reconnectLoop is runing
+        chatWs.onopen = () =>{
+            if (reconnectLoop !== null){
+                clearInterval(reconnectLoop)
+                reconnectLoop = null;
+            }
+        }
+
+        chatWs.onmessage = (event) => {
+            document.getElementById('chatMessages').innerHTML = `<div>${event.data}</div>`;
+        };
+
+    }
+
+    // Chat WebSocket
+    
     document.getElementById('chatSend').onclick = () => {
-      const msg = document.getElementById('chatInput').value;
-      chatWs.send(msg);
+    
+      if (chatWs !== null){
+        const msg = document.getElementById('chatInput').value;
+        chatWs.send(msg);
+      }
     };
 
     // Notifications WebSocket
@@ -143,8 +187,10 @@
           authToken = data.authToken;
           postResponse.innerHTML = `
             <strong style="color: green;">✅ Access: ${data.access}</strong><br>
-            <em>Welcome! You got it right.</em>
+            <em>Welcome! Correct password supplied.</em>
           `;
+          // now we have an auth token, connect webchat websocket
+          connectChat();
         } else if (response.status === 403) {
           authToken = '';
           postResponse.innerHTML = `
